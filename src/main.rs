@@ -1,0 +1,130 @@
+mod commands;
+mod wifi;
+mod helpers;
+
+use std::{ process::Child,path::Path };
+
+use gtk4 as gtk;
+use gtk::{prelude::*, Widget, ApplicationWindow, ListBox, ScrolledWindow, Image, Window, Entry, Button };
+use glib::ExitCode;
+use libadwaita::{ prelude::*, Application, ExpanderRow };
+use uuid::Uuid;
+
+use crate::commands::exec;
+use crate::commands::read_output;
+use crate::wifi::{ Wifi, network_manager::NetworkManager, Lister };
+use crate::helpers::parent_window;
+
+
+fn get_password(password: &str) -> Child {
+    let args: Vec<&str> = vec![password];
+    exec("echo".to_owned(), args, None)
+}
+
+fn check_password(password: &str) -> bool {
+    let child = get_password(&password);
+    let args = vec!["-S", "-p", "''", "whoami"];
+    let result = exec("sudo".to_owned(), args, child.stdout);
+    let l = read_output(result);
+    l.trim().eq("root")
+}
+
+fn modal_password() -> gtk::Builder {
+    let builder = gtk::Builder::from_file("/usr/share/wifiqr/password.ui");
+    //let builder = gtk::Builder::from_file("/com/ericktucto/wifiqr/password.ui");
+    let input: Entry = builder.object("input").unwrap();
+    let cancelar: Button = builder.object("cancel").unwrap();
+    let toggle: Button = builder.object("toggle").unwrap();
+
+    toggle.connect_clicked(move |btn| {
+        let is_visibility = input.property::<bool>("visibility");
+        if is_visibility {
+            input.set_visibility(false);
+            btn.set_icon_name("view-conceal-symbolic");
+        } else {
+            input.set_visibility(true);
+            btn.set_icon_name("view-reveal-symbolic");
+        }
+    });
+    cancelar.connect_clicked(|_| {
+        std::process::exit(0);
+    });
+
+    builder
+}
+
+fn create_image(w: &Wifi) -> Image {
+    let nombre = Uuid::new_v4().to_string() + &String::from(".png");
+    let nombre = String::from("/tmp/") + &nombre;
+    w.image().save(nombre.clone()).unwrap();
+    let ruta = Path::new(nombre.as_str());
+    let image = Image::from_file(ruta);
+    image.set_size_request(300, 300);
+    image
+}
+
+fn create_expanders_wifi(password: String) -> ListBox {
+    let lista = ListBox::new();
+    let lister = NetworkManager { password };
+    let resultado: Vec<Wifi> = lister.list();
+
+    for w in resultado.iter() {
+        let row1 = ExpanderRow::new();
+        row1.set_property("title", w.get_name());
+
+        // image qr
+        let image = create_image(&w);
+
+        // add to ExpanderRow
+        row1.add_row(&image);
+        lista.insert(&row1, -1);
+    }
+    lista
+}
+
+fn main() -> ExitCode {
+    let app = Application::builder()
+        .application_id("com.ericktucto.wifiqr")
+        .build();
+
+    app.connect_activate(|app| {
+        // scrollwindow
+        let scrolled_window = ScrolledWindow::new();
+        scrolled_window.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Automatic);
+
+        // We create the main window
+        let window = ApplicationWindow::builder()
+            .application(app)
+            .title("Mi conexiones guardadas")
+            .width_request(600)
+            .height_request(400)
+            .child(&scrolled_window)
+            .build();
+
+        let builder = modal_password();
+        let modal: Window = builder.object("ventana").unwrap();
+        modal.set_transient_for(Some(&window));
+        // Show the window.
+        window.connect_show(move |_| {
+            modal.present();
+        });
+
+        let aceptar: Button = builder.object("aceptar").unwrap();
+        let input: Entry = builder.object("input").unwrap();
+        aceptar.connect_clicked(move |btn| {
+            if check_password(&input.text().as_str()) {
+                // create list saved wifi
+                let password: String = String::from(input.text().as_str());
+                let lista = create_expanders_wifi(password);
+                scrolled_window.set_child(Some(&lista));
+                let modal = parent_window(btn.clone().upcast::<Widget>());
+                modal.hide();
+            }
+        });
+
+        window.show();
+    });
+
+    app.run().into()
+}
+
