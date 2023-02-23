@@ -9,10 +9,12 @@ use gtk::{prelude::*, Widget, ApplicationWindow, ListBox, ScrolledWindow, Image,
 use glib::ExitCode;
 use libadwaita::{ prelude::*, Application, ExpanderRow };
 use uuid::Uuid;
+use wifi::AdminNetwork;
+use wifi::get_name_admin_network;
 
 use crate::commands::exec;
 use crate::commands::read_output;
-use crate::wifi::{ Wifi, network_manager::NetworkManager, Lister };
+use crate::wifi::{ Wifi, network_manager::NetworkManager, Lister, connman::ConnMan };
 use crate::helpers::parent_window;
 
 
@@ -65,8 +67,17 @@ fn create_image(w: &Wifi) -> Image {
 
 fn create_expanders_wifi(password: String) -> ListBox {
     let lista = ListBox::new();
-    let lister = NetworkManager { password };
-    let resultado: Vec<Wifi> = lister.list();
+    let resultado: Vec<Wifi> = match get_name_admin_network() {
+        AdminNetwork::NetworkManager => {
+            let lister = NetworkManager { password };
+            lister.list()
+        },
+        AdminNetwork::ConnMan => {
+            let lister = ConnMan { password };
+            lister.list()
+        },
+        AdminNetwork::NoKnown => panic!("testing...")
+    };
 
     for w in resultado.iter() {
         let row1 = ExpanderRow::new();
