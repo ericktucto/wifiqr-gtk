@@ -2,7 +2,7 @@ use gtk4 as gtk;
 use gtk::glib::subclass::InitializingObject;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, Button};
+use gtk::{glib, CompositeTemplate, Button, Entry};
 
 use super::Window;
 
@@ -13,6 +13,12 @@ use super::Window;
 pub struct PasswordImpl {
     #[template_child]
     pub aceptar: TemplateChild<Button>,
+    #[template_child]
+    pub cancelar: TemplateChild<Button>,
+    #[template_child]
+    pub toggle: TemplateChild<Button>,
+    #[template_child]
+    pub input: TemplateChild<Entry>,
 }
 // ANCHOR_END: object
 
@@ -41,6 +47,20 @@ impl ObjectImpl for PasswordImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
+        let input: Entry = self.input.clone();
+        self.toggle.connect_clicked(move |button| {
+            let is_visibility = input.property::<bool>("visibility");
+            if is_visibility {
+                input.set_visibility(false);
+                button.set_icon_name("view-conceal-symbolic");
+            } else {
+                input.set_visibility(true);
+                button.set_icon_name("view-reveal-symbolic");
+            }
+        });
+        self.cancelar.connect_clicked(|_| {
+            std::process::exit(0);
+        });
     }
 }
 // ANCHOR_END: object_impl
