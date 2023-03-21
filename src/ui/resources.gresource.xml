@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/ericktucto/wifiqr/">
+    <file compressed="true" preprocess="xml-stripblanks">app.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">row.ui</file>
+    <file compressed="true">style.css</file>
+  </gresource>
+</gresources>
+

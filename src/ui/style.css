@@ -1,0 +1,21 @@
+@define-color border-color #ccc;
+list {
+  border-radius: 1.2rem;
+}
+
+row:first-child {
+  border-top: 1px solid @border-color;
+}
+row:first-child, list {
+  border-top-right-radius: 1.2rem;
+  border-top-left-radius: 1.2rem;
+}
+row:last-child {
+  border-bottom-right-radius: 1.2rem;
+  border-bottom-left-radius: 1.2rem;
+}
+row {
+  border: 1px solid @border-color;
+  border-top: none;
+  padding: 12px 16px;
+}

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="Row" parent="GtkListBoxRow">
+    <property name="activatable">false</property>
+    <child>
+      <object class="GtkBox" id="box">
+        <child>
+          <object class="GtkLabel" id="label">
+            <property name="label">Nombre Wifi</property>
+            <property name="hexpand">true</property>
+            <property name="halign">start</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="button">
+            <property name="label">Codigo</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
