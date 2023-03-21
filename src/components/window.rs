@@ -4,13 +4,14 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate, ListBox};
 
+use crate::components::Password;
 use crate::components::row::Row;
 
 // ANCHOR: object
 // Object holding the state
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/com/ericktucto/wifiqr/app.ui")]
-pub struct Window {
+pub struct MyWindowImpl {
     #[template_child]
     pub listbox: TemplateChild<ListBox>,
 }
@@ -19,10 +20,10 @@ pub struct Window {
 // ANCHOR: subclass
 // The central trait for subclassing a GObject
 #[glib::object_subclass]
-impl ObjectSubclass for Window {
+impl ObjectSubclass for MyWindowImpl {
     // `NAME` needs to match `class` attribute of template
     const NAME: &'static str = "WifiQRWindow";
-    type Type = super::Window;
+    type Type = Window;
     type ParentType = gtk::ApplicationWindow;
 
     fn class_init(klass: &mut Self::Class) {
@@ -37,7 +38,7 @@ impl ObjectSubclass for Window {
 
 // ANCHOR: object_impl
 // Trait shared by all GObjects
-impl ObjectImpl for Window {
+impl ObjectImpl for MyWindowImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
@@ -48,11 +49,31 @@ impl ObjectImpl for Window {
 // ANCHOR_END: object_impl
 
 // Trait shared by all widgets
-impl WidgetImpl for Window {}
+impl WidgetImpl for MyWindowImpl {}
 
 // Trait shared by all windows
-impl WindowImpl for Window {}
+impl WindowImpl for MyWindowImpl {}
 
 // Trait shared by all application windows
-impl ApplicationWindowImpl for Window {}
+impl ApplicationWindowImpl for MyWindowImpl {}
+
+glib::wrapper! {
+    pub struct Window(ObjectSubclass<MyWindowImpl>)
+        @extends gtk::ApplicationWindow, gtk::Window, gtk::Widget,
+        @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable,
+                    gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
+}
+
+impl Window {
+    pub fn new(app: &gtk::Application) -> Self {
+        // Create new window
+        let obj: Self = glib::Object::builder().property("application", app).build();
+        let modal = Password::new(&obj);
+        obj.connect_show(glib::clone!(@weak modal as ctx => move |_| {
+            ctx.show();
+        }));
+
+        obj
+    }
+}
 
