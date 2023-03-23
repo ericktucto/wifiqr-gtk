@@ -75,7 +75,7 @@ pub fn get_name_admin_network() -> AdminNetwork {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Wifi {
     name: String,
     password: String,

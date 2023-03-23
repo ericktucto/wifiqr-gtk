@@ -2,10 +2,15 @@ use gtk4 as gtk;
 use gtk::glib::subclass::InitializingObject;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, ListBox};
+use gtk::{ glib, CompositeTemplate, ListBox };
+use std::cell::RefCell;
+use std::path::Path;
+use std::rc::Rc;
 
-use crate::components::Password;
 use crate::components::row::Row;
+use crate::wifi::{ AdminNetwork, get_name_admin_network, Wifi, network_manager::NetworkManager, connman::ConnMan, Lister };
+
+use super::{Password, ModalImage};
 
 // ANCHOR: object
 // Object holding the state
@@ -14,6 +19,7 @@ use crate::components::row::Row;
 pub struct MyWindowImpl {
     #[template_child]
     pub listbox: TemplateChild<ListBox>,
+    pub modalimage: Rc<RefCell<ModalImage>>,
 }
 // ANCHOR_END: object
 
@@ -42,8 +48,10 @@ impl ObjectImpl for MyWindowImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
-        let fila = Row::new();
-        self.listbox.append(&fila);
+        if Path::new("/tmp/wifiqr").exists() {
+            std::fs::remove_dir_all("/tmp/wifiqr").expect("Directory not found");
+        }
+        std::fs::create_dir("/tmp/wifiqr").expect("Directory exists");
     }
 }
 // ANCHOR_END: object_impl
@@ -68,12 +76,56 @@ impl Window {
     pub fn new(app: &gtk::Application) -> Self {
         // Create new window
         let obj: Self = glib::Object::builder().property("application", app).build();
-        let modal = Password::new(&obj);
-        obj.connect_show(glib::clone!(@weak modal as ctx => move |_| {
-            ctx.show();
-        }));
+        let modal_password = Password::new(&obj);
+        let modal_image = ModalImage::new(Some(&obj));
+        obj.set_modalimage(modal_image);
+        modal_password.connect(
+            "authorized",
+            false,
+            |args| {
+                let modal = args[0].get::<Password>().unwrap();
+                let password = args[1].get::<String>().unwrap();
+                if let Some(window) = modal.transient_for() {
+                    let resultado: Vec<Wifi> = match get_name_admin_network() {
+                        AdminNetwork::NetworkManager => {
+                            let lister = NetworkManager { password };
+                            lister.list()
+                        },
+                        AdminNetwork::ConnMan => {
+                            let lister = ConnMan { password };
+                            lister.list()
+                        },
+                        AdminNetwork::NoKnown => panic!("testing...")
+                    };
 
+                    let window = window.downcast::<Window>().expect("Error de conversion");
+                    for w in resultado.iter() {
+                        window.add_wifi(&w.clone());
+                    }
+                }
+                modal.hide();
+                None
+            }
+        );
+        obj.connect_show(glib::clone!(@weak modal_password as pass => move |_| {
+            pass.show();
+        }));
         obj
+    }
+
+    fn set_modalimage(&self, modal: ModalImage) {
+        self.imp().modalimage.replace(modal);
+    }
+
+    fn add_wifi(&self, wifi: &Wifi) {
+        let fila = Row::new(wifi);
+        let path = fila.codigo();
+        fila.connect_qrcode(glib::clone!(@weak self as ctx => move |_| {
+            let modal = ctx.imp().modalimage.borrow();
+            modal.set_image(path.clone());
+            modal.show();
+        }));
+        self.imp().listbox.append(&fila);
     }
 }
 

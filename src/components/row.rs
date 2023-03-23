@@ -5,8 +5,12 @@ use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{CompositeTemplate, Button, Label, glib};
 use once_cell::sync::Lazy;
+use uuid::Uuid;
 use std::cell::RefCell;
 use std::rc::Rc;
+use glib::value::ToValue;
+
+use crate::wifi::Wifi;
 
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/com/ericktucto/wifiqr/row.ui")]
@@ -36,9 +40,6 @@ impl ObjectSubclass for RowImpl {
 impl ObjectImpl for RowImpl {
     fn constructed(&self) {
         self.parent_constructed();
-        self.button.connect_clicked(glib::clone!(@weak self as ctx => move |_| {
-            println!("{:?}", ctx.codigo.borrow());
-        }));
     }
     fn properties() -> &'static [glib::ParamSpec] {
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
@@ -77,7 +78,32 @@ glib::wrapper! {
 }
 
 impl Row {
-    pub fn new() -> Self {
-        glib::Object::builder().build()
+    pub fn new(wifi: &Wifi) -> Self {
+        let codigo = Self::create_image(wifi);
+        let obj: Row = glib::Object::builder()
+            .property("codigo", codigo)
+            .build();
+        obj.set_label(wifi.get_name().as_str());
+        obj
+    }
+
+    pub fn set_label(&self, label: &str) {
+        self.imp().label.set_label(label);
+    }
+
+    fn create_image(w: &Wifi) -> String {
+        let nombre = Uuid::new_v4().to_string() + &String::from(".png");
+        let nombre = String::from("/tmp/wifiqr/") + &nombre;
+        w.image().save(nombre.clone()).unwrap();
+        nombre
+    }
+
+    pub fn codigo(&self) -> String {
+        let codigo = self.imp().codigo.borrow().to_value();
+        codigo.get::<String>().unwrap()
+    }
+
+    pub fn connect_qrcode<F: Fn(&gtk4::Button) + 'static>(&self, funcion: F) {
+        self.imp().button.connect_clicked(funcion);
     }
 }

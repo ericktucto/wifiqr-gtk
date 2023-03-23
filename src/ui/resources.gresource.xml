@@ -4,6 +4,7 @@
     <file compressed="true" preprocess="xml-stripblanks">app.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">row.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">password.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">image.ui</file>
     <file compressed="true">style.css</file>
   </gresource>
 </gresources>

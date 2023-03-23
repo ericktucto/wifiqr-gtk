@@ -1,13 +1,13 @@
 use gtk4 as gtk;
-use gtk::glib::subclass::InitializingObject;
+use gtk::glib::subclass::{ InitializingObject, Signal };
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{glib, CompositeTemplate, Button, Entry};
+use once_cell::sync::Lazy;
 
 use super::Window;
+use crate::helpers::check_password;
 
-// ANCHOR: object
-// Object holding the state
 #[derive(CompositeTemplate, Default)]
 #[template(resource = "/com/ericktucto/wifiqr/password.ui")]
 pub struct PasswordImpl {
@@ -20,10 +20,7 @@ pub struct PasswordImpl {
     #[template_child]
     pub input: TemplateChild<Entry>,
 }
-// ANCHOR_END: object
 
-// ANCHOR: subclass
-// The central trait for subclassing a GObject
 #[glib::object_subclass]
 impl ObjectSubclass for PasswordImpl {
     // `NAME` needs to match `class` attribute of template
@@ -39,16 +36,13 @@ impl ObjectSubclass for PasswordImpl {
         obj.init_template();
     }
 }
-// ANCHOR_END: subclass
 
-// ANCHOR: object_impl
-// Trait shared by all GObjects
 impl ObjectImpl for PasswordImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
         let input: Entry = self.input.clone();
-        self.toggle.connect_clicked(move |button| {
+        /*self.toggle.connect_clicked(move |button| {
             let is_visibility = input.property::<bool>("visibility");
             if is_visibility {
                 input.set_visibility(false);
@@ -57,10 +51,24 @@ impl ObjectImpl for PasswordImpl {
                 input.set_visibility(true);
                 button.set_icon_name("view-reveal-symbolic");
             }
-        });
+        });*/
+        self.aceptar.connect_clicked(glib::clone!(@weak self as ctx => move |_| {
+            if check_password(&input.text().as_str()) {
+                // create list saved wifi
+                let password: String = String::from(input.text().as_str());
+                ctx.obj().emit_by_name::<()>("authorized", &[&password]);
+            }
+        }));
         self.cancelar.connect_clicked(|_| {
             std::process::exit(0);
         });
+    }
+
+    fn signals() -> &'static [Signal] {
+        static SIGNALS: Lazy<Vec<Signal>> = Lazy::new(|| {
+            vec![Signal::builder("authorized").param_types([String::static_type()]).build()]
+        });
+        SIGNALS.as_ref()
     }
 }
 // ANCHOR_END: object_impl
