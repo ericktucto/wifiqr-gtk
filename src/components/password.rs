@@ -41,8 +41,8 @@ impl ObjectImpl for PasswordImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
-        let input: Entry = self.input.clone();
-        /*self.toggle.connect_clicked(move |button| {
+        self.toggle.connect_clicked(glib::clone!(@weak self as ctx => move |button| {
+            let input: Entry = ctx.input.clone();
             let is_visibility = input.property::<bool>("visibility");
             if is_visibility {
                 input.set_visibility(false);
@@ -51,8 +51,9 @@ impl ObjectImpl for PasswordImpl {
                 input.set_visibility(true);
                 button.set_icon_name("view-reveal-symbolic");
             }
-        });*/
+        }));
         self.aceptar.connect_clicked(glib::clone!(@weak self as ctx => move |_| {
+            let input: Entry = ctx.input.clone();
             if check_password(&input.text().as_str()) {
                 // create list saved wifi
                 let password: String = String::from(input.text().as_str());
