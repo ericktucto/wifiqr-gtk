@@ -41,6 +41,9 @@ impl ObjectImpl for PasswordImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
+        self.input.connect_activate(glib::clone!(@weak self as ctx => move |_| {
+            ctx.authentication();
+        }));
         self.toggle.connect_clicked(glib::clone!(@weak self as ctx => move |button| {
             let input: Entry = ctx.input.clone();
             let is_visibility = input.property::<bool>("visibility");
@@ -53,12 +56,7 @@ impl ObjectImpl for PasswordImpl {
             }
         }));
         self.aceptar.connect_clicked(glib::clone!(@weak self as ctx => move |_| {
-            let input: Entry = ctx.input.clone();
-            if check_password(&input.text().as_str()) {
-                // create list saved wifi
-                let password: String = String::from(input.text().as_str());
-                ctx.obj().emit_by_name::<()>("authorized", &[&password]);
-            }
+            ctx.authentication();
         }));
         self.cancelar.connect_clicked(|_| {
             std::process::exit(0);
@@ -82,6 +80,18 @@ impl WindowImpl for PasswordImpl {}
 
 // Trait shared by all application windows
 impl ApplicationWindowImpl for PasswordImpl {}
+
+impl PasswordImpl {
+    fn authentication(&self) {
+        let input = self.input.clone();
+        if check_password(&input.text().as_str()) {
+            // create list saved wifi
+            let password: String = String::from(input.text().as_str());
+            self.obj().emit_by_name::<()>("authorized", &[&password]);
+        }
+    }
+
+}
 
 glib::wrapper! {
     pub struct Password(ObjectSubclass<PasswordImpl>)

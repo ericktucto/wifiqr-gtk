@@ -37,14 +37,9 @@
             <child>
               <object class="GtkButton" id="aceptar">
                 <property name="label">Aceptar</property>
+                <property name="css-classes">suggested-action</property>
               </object>
             </child>
-            <layout>
-              <property name="column">0</property>
-              <property name="column-span">1</property>
-              <property name="row">1</property>
-              <property name="row-span">1</property>
-            </layout>
           </object>
         </child>
       </object>
