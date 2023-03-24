@@ -120,8 +120,11 @@ impl Window {
     fn add_wifi(&self, wifi: &Wifi) {
         let fila = Row::new(wifi);
         let path = fila.codigo();
+        let nombre = wifi.get_name();
+
         fila.connect_qrcode(glib::clone!(@weak self as ctx => move |_| {
             let modal = ctx.imp().modalimage.borrow();
+            modal.set_title(Some(nombre.clone().as_str()));
             modal.set_image(path.clone());
             modal.show();
         }));

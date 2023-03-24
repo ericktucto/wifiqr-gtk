@@ -13,7 +13,23 @@
         </child>
         <child>
           <object class="GtkButton" id="button">
-            <property name="label">Codigo</property>
+            <property name="css-classes">suggested-action</property>
+            <child>
+              <object class="GtkBox">
+                <property name="spacing">4</property>
+                <child>
+                  <object class="GtkImage">
+                    <property name="resource">/com/ericktucto/wifiqr/qr-code.svg</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="label">codigo</property>
+                    <property name="css-classes">suggested-action</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
         </child>
       </object>
