@@ -30,6 +30,7 @@ impl ObjectSubclass for PasswordImpl {
 
     fn class_init(klass: &mut Self::Class) {
         klass.bind_template();
+        klass.bind_template_callbacks();
     }
 
     fn instance_init(obj: &InitializingObject<Self>) {
@@ -41,26 +42,6 @@ impl ObjectImpl for PasswordImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
-        self.input.connect_activate(glib::clone!(@weak self as ctx => move |_| {
-            ctx.authentication();
-        }));
-        self.toggle.connect_clicked(glib::clone!(@weak self as ctx => move |button| {
-            let input: Entry = ctx.input.clone();
-            let is_visibility = input.property::<bool>("visibility");
-            if is_visibility {
-                input.set_visibility(false);
-                button.set_icon_name("view-conceal-symbolic");
-            } else {
-                input.set_visibility(true);
-                button.set_icon_name("view-reveal-symbolic");
-            }
-        }));
-        self.aceptar.connect_clicked(glib::clone!(@weak self as ctx => move |_| {
-            ctx.authentication();
-        }));
-        self.cancelar.connect_clicked(|_| {
-            std::process::exit(0);
-        });
     }
 
     fn signals() -> &'static [Signal] {
@@ -80,6 +61,33 @@ impl WindowImpl for PasswordImpl {}
 
 // Trait shared by all application windows
 impl ApplicationWindowImpl for PasswordImpl {}
+
+#[gtk::template_callbacks]
+impl PasswordImpl {
+    #[template_callback]
+    fn handler_cancelar_clicked(&self, _: gtk::Button) {
+        std::process::exit(0);
+    }
+    #[template_callback]
+    fn handler_aceptar_clicked(&self, _: gtk::Button) {
+        self.authentication();
+    }
+    #[template_callback]
+    fn handler_input_activate(&self, _: gtk::Entry) {
+        self.authentication();
+    }
+    #[template_callback]
+    fn handler_toggle_clicked(&self, button: gtk::Button) {
+        let is_visibility = self.input.property::<bool>("visibility");
+        if is_visibility {
+            self.input.set_visibility(false);
+            button.set_icon_name("view-conceal-symbolic");
+        } else {
+            self.input.set_visibility(true);
+            button.set_icon_name("view-reveal-symbolic");
+        }
+    }
+}
 
 impl PasswordImpl {
     fn authentication(&self) {
