@@ -69,11 +69,7 @@ impl PasswordImpl {
         std::process::exit(0);
     }
     #[template_callback]
-    fn handler_aceptar_clicked(&self, _: gtk::Button) {
-        self.authentication();
-    }
-    #[template_callback]
-    fn handler_input_activate(&self, _: gtk::Entry) {
+    fn handler_on_authentication(&self, _: gtk::Widget) {
         self.authentication();
     }
     #[template_callback]
