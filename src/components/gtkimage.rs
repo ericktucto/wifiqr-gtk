@@ -25,6 +25,7 @@ impl ObjectSubclass for ImageImpl {
 
     fn class_init(klass: &mut Self::Class) {
         klass.bind_template();
+        klass.bind_template_callbacks();
     }
 
     fn instance_init(obj: &InitializingObject<Self>) {
@@ -35,9 +36,6 @@ impl ObjectImpl for ImageImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
-        self.aceptar.connect_clicked(glib::clone!(@weak self as ctx => move |_| {
-            ctx.hide();
-        }));
     }
 }
 // ANCHOR_END: object_impl
@@ -50,6 +48,14 @@ impl WindowImpl for ImageImpl {}
 
 // Trait shared by all application windows
 impl ApplicationWindowImpl for ImageImpl {}
+
+#[gtk::template_callbacks]
+impl ImageImpl {
+    #[template_callback]
+    fn handler_aceptar_clicked(&self, _: gtk::Button) {
+        self.hide();
+    }
+}
 
 glib::wrapper! {
     pub struct ModalImage(ObjectSubclass<ImageImpl>)

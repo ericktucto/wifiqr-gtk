@@ -36,6 +36,7 @@
             </child>
             <child>
               <object class="GtkButton" id="aceptar">
+                <signal name="clicked" handler="handler_aceptar_clicked" swapped="true"/>
                 <property name="label">Aceptar</property>
                 <property name="css-classes">suggested-action</property>
               </object>
