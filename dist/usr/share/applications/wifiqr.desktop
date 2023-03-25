@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Version=1
+Name=Compartir Wifi
+Comment=Comparte tu wifi que estas usando
+Exec=wifiqr
+Icon=/usr/share/icons/wifiqr.png
+Categories=Network
