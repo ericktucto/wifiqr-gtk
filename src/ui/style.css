@@ -19,3 +19,7 @@ row {
   border-top: none;
   padding: 12px 16px;
 }
+
+.message-password {
+  color: #E53935;
+}

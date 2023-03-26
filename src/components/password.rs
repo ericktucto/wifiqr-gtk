@@ -2,7 +2,7 @@ use gtk4 as gtk;
 use gtk::glib::subclass::{ InitializingObject, Signal };
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate, Button, Entry};
+use gtk::{glib, CompositeTemplate, Button, Entry, Label};
 use once_cell::sync::Lazy;
 
 use super::Window;
@@ -19,6 +19,8 @@ pub struct PasswordImpl {
     pub toggle: TemplateChild<Button>,
     #[template_child]
     pub input: TemplateChild<Entry>,
+    #[template_child]
+    pub message: TemplateChild<Label>,
 }
 
 #[glib::object_subclass]
@@ -93,6 +95,7 @@ impl PasswordImpl {
             let password: String = String::from(input.text().as_str());
             self.obj().emit_by_name::<()>("authorized", &[&password]);
         }
+        self.message.set_visible(true);
     }
 
 }
