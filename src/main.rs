@@ -3,7 +3,6 @@ mod components;
 mod wifi;
 mod helpers;
 
-use gtk4 as gtk;
 use gtk::prelude::*;
 use gtk::{ Application, gio };
 use components::Window;
@@ -41,8 +40,8 @@ fn load_css() {
     provider.load_from_resource("/com/ericktucto/wifiqr/style.css");
 
     // Add the provider to the default screen
-    gtk::StyleContext::add_provider_for_display(
-        &gtk::gdk::Display::default().expect("Could not connect to a display."),
+    gtk::StyleContext::add_provider_for_screen(
+        &gtk::gdk::Screen::default().expect("Could not connect to a display."),
         &provider,
         gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
     );

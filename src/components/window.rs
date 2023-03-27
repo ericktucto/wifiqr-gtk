@@ -1,8 +1,7 @@
-use gtk4 as gtk;
 use gtk::glib::subclass::InitializingObject;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{ glib, CompositeTemplate, ListBox };
+use gtk::{ glib, CompositeTemplate, ListBox, gio };
 use std::cell::RefCell;
 use std::path::Path;
 use std::rc::Rc;
@@ -33,7 +32,7 @@ impl ObjectSubclass for MyWindowImpl {
     type ParentType = gtk::ApplicationWindow;
 
     fn class_init(klass: &mut Self::Class) {
-        klass.bind_template();
+        Self::bind_template(klass);
     }
 
     fn instance_init(obj: &InitializingObject<Self>) {
@@ -58,7 +57,10 @@ impl ObjectImpl for MyWindowImpl {
 
 // Trait shared by all widgets
 impl WidgetImpl for MyWindowImpl {}
-
+// Trait shared by Container
+impl ContainerImpl for MyWindowImpl {}
+// Trait shared by Bindable widgets
+impl BinImpl for MyWindowImpl {}
 // Trait shared by all windows
 impl WindowImpl for MyWindowImpl {}
 
@@ -68,15 +70,16 @@ impl ApplicationWindowImpl for MyWindowImpl {}
 glib::wrapper! {
     pub struct Window(ObjectSubclass<MyWindowImpl>)
         @extends gtk::ApplicationWindow, gtk::Window, gtk::Widget,
-        @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable,
-                    gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
+        @implements gio::ActionGroup, gio::ActionMap, gtk::Buildable;
 }
 
 impl Window {
     pub fn new(app: &gtk::Application) -> Self {
         // Create new window
         let obj: Self = glib::Object::builder().property("application", app).build();
-        let modal_password = Password::new(&obj);
+        let modal_password = Password::new();
+        modal_password.set_transient_for(Some(&obj));
+
         let modal_image = ModalImage::new(Some(&obj));
         obj.set_modalimage(modal_image);
         modal_password.connect(
@@ -124,11 +127,13 @@ impl Window {
 
         fila.connect_qrcode(glib::clone!(@weak self as ctx => move |_| {
             let modal = ctx.imp().modalimage.borrow();
-            modal.set_title(Some(nombre.clone().as_str()));
+            //modal.set_title(nombre.clone().as_str());
+            modal.set_property("title", nombre.clone().as_str());
             modal.set_image(path.clone());
-            modal.show();
+            modal.show_all();
         }));
-        self.imp().listbox.append(&fila);
+        self.imp().listbox.get().add(&fila);
+        fila.show_all();
     }
 }
 

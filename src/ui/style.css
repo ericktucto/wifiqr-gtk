@@ -23,3 +23,7 @@ row {
 .message-password {
   color: #E53935;
 }
+
+.no-border {
+  border: none;
+}

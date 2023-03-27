@@ -1,9 +1,8 @@
 use gio::glib::subclass::InitializingObject;
-use gtk4 as gtk;
 
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{CompositeTemplate, Button, Label, glib};
+use gtk::{CompositeTemplate, Button, Label, glib, gio};
 use once_cell::sync::Lazy;
 use uuid::Uuid;
 use std::cell::RefCell;
@@ -29,7 +28,7 @@ impl ObjectSubclass for RowImpl {
     type ParentType = gtk::ListBoxRow;
 
     fn class_init(klass: &mut Self::Class) {
-        klass.bind_template();
+        Self::bind_template(klass);
     }
 
     fn instance_init(obj: &InitializingObject<Self>) {
@@ -68,13 +67,16 @@ impl ObjectImpl for RowImpl {
 
 }
 impl WidgetImpl for RowImpl {}
+// Trait shared by Container
+impl ContainerImpl for RowImpl {}
+// Trait shared by Bindable widgets
+impl BinImpl for RowImpl {}
 impl ListBoxRowImpl for RowImpl {}
 glib::wrapper! {
     pub struct Row(ObjectSubclass<RowImpl>)
         @extends gtk::Widget, gtk::ListBoxRow, gtk::AboutDialog,
-        @implements gtk::Accessible, gtk::Buildable, gtk::ConstraintTarget,
-                    gtk::Actionable, gio::ActionGroup, gio::ActionMap,
-                    gtk::ActionBar, gtk::ATContext;
+        @implements gtk::Buildable, gtk::Actionable, gio::ActionGroup, gio::ActionMap,
+                    gtk::ActionBar;
 }
 
 impl Row {
@@ -103,7 +105,7 @@ impl Row {
         codigo.get::<String>().unwrap()
     }
 
-    pub fn connect_qrcode<F: Fn(&gtk4::Button) + 'static>(&self, funcion: F) {
+    pub fn connect_qrcode<F: Fn(&gtk::Button) + 'static>(&self, funcion: F) {
         self.imp().button.connect_clicked(funcion);
     }
 }

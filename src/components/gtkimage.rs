@@ -1,9 +1,7 @@
-use gtk4 as gtk;
 use gtk::glib::subclass::InitializingObject;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
-use gtk::{glib, CompositeTemplate};
-
+use gtk::{glib, gio, CompositeTemplate};
 use super::Window;
 
 
@@ -24,8 +22,7 @@ impl ObjectSubclass for ImageImpl {
     type ParentType = gtk::Window;
 
     fn class_init(klass: &mut Self::Class) {
-        klass.bind_template();
-        klass.bind_template_callbacks();
+        Self::bind_template(klass);
     }
 
     fn instance_init(obj: &InitializingObject<Self>) {
@@ -36,12 +33,19 @@ impl ObjectImpl for ImageImpl {
     fn constructed(&self) {
         // Call "constructed" on parent
         self.parent_constructed();
+        self.aceptar.connect_clicked(glib::clone!(@weak self as ctx => move|_| {
+            ctx.obj().close();
+        }));
     }
 }
 // ANCHOR_END: object_impl
 
 // Trait shared by all widgets
 impl WidgetImpl for ImageImpl {}
+// Trait shared by Container
+impl ContainerImpl for ImageImpl {}
+// Trait shared by Bindable widgets
+impl BinImpl for ImageImpl {}
 
 // Trait shared by all windows
 impl WindowImpl for ImageImpl {}
@@ -49,19 +53,10 @@ impl WindowImpl for ImageImpl {}
 // Trait shared by all application windows
 impl ApplicationWindowImpl for ImageImpl {}
 
-#[gtk::template_callbacks]
-impl ImageImpl {
-    #[template_callback]
-    fn handler_aceptar_clicked(&self, _: gtk::Button) {
-        self.hide();
-    }
-}
-
 glib::wrapper! {
     pub struct ModalImage(ObjectSubclass<ImageImpl>)
         @extends gtk::Window, gtk::Widget,
-        @implements gio::ActionGroup, gio::ActionMap, gtk::Accessible, gtk::Buildable,
-                    gtk::ConstraintTarget, gtk::Native, gtk::Root, gtk::ShortcutManager;
+        @implements gio::ActionGroup, gio::ActionMap, gtk::Buildable;
 }
 
 impl ModalImage {
