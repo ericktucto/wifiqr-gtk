@@ -2,9 +2,7 @@ use gtk::glib::subclass::InitializingObject;
 use gtk::prelude::*;
 use gtk::subclass::prelude::*;
 use gtk::{ glib, CompositeTemplate, ListBox, gio };
-use std::cell::RefCell;
 use std::path::Path;
-use std::rc::Rc;
 
 use crate::components::row::Row;
 use crate::wifi::{ AdminNetwork, get_name_admin_network, Wifi, network_manager::NetworkManager, connman::ConnMan, Lister };
@@ -18,7 +16,6 @@ use super::{Password, ModalImage};
 pub struct MyWindowImpl {
     #[template_child]
     pub listbox: TemplateChild<ListBox>,
-    pub modalimage: Rc<RefCell<ModalImage>>,
 }
 // ANCHOR_END: object
 
@@ -80,8 +77,6 @@ impl Window {
         let modal_password = Password::new();
         modal_password.set_transient_for(Some(&obj));
 
-        let modal_image = ModalImage::new(Some(&obj));
-        obj.set_modalimage(modal_image);
         modal_password.connect(
             "authorized",
             false,
@@ -116,18 +111,13 @@ impl Window {
         obj
     }
 
-    fn set_modalimage(&self, modal: ModalImage) {
-        self.imp().modalimage.replace(modal);
-    }
-
     fn add_wifi(&self, wifi: &Wifi) {
         let fila = Row::new(wifi);
         let path = fila.codigo();
         let nombre = wifi.get_name();
 
         fila.connect_qrcode(glib::clone!(@weak self as ctx => move |_| {
-            let modal = ctx.imp().modalimage.borrow();
-            //modal.set_title(nombre.clone().as_str());
+            let modal = ModalImage::new(Some(&ctx));
             modal.set_property("title", nombre.clone().as_str());
             modal.set_image(path.clone());
             modal.show_all();
